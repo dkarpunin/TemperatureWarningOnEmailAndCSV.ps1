@@ -1,12 +1,14 @@
-﻿$MainName = "<temperature_place_name>"
+$MainName = "<sensor_place>"
 
-$Uri = "<uri_web_page>"
+$Uri = "sensor_uri"
 
 $Web = Invoke-WebRequest -Uri $Uri
 
-$Tcur = [int]$Web.RawContent.Split(" = ")[24]
+$Tcur = [double]$Web.RawContent.Split(" = ")[24]
 
 $Tmax = 24
+
+$Tmin = 5
 
 $Date = Get-Date -Format "yyyyMMdd"
 
@@ -14,15 +16,27 @@ $Time = Get-Date -Format "HH:mm:ss"
 
 if ($Tcur -ge $Tmax) {
 
-    $MessageBody = "<html><body style='font-family:Geneva, Arial, Helvetica, sans-serif;font-size:0.8em'><p>Температура в $MainName <b>$Tcur град. C</b> (Tmax = $Tmax).</p></body></html>"
+    $MessageBody = "<html><body style='font-family:Geneva, Arial, Helvetica, sans-serif;font-size:1.5em'><div>Температура в $MainName <strong style='color: red'>$Tcur &degC</strong> (Tmax = $Tmax).</div></body></html>"
+
+    $MessageSubject = "$MainName. Повышение температуры. $DT"
+
+}
+
+if ($Tcur -le $Tmin) {
+
+    $MessageBody = "<html><body style='font-family:Geneva, Arial, Helvetica, sans-serif;font-size:1.5em'><div>Температура в $MainName <strong style='color: blue'>$Tcur &degC</strong> (Tmin = $Tmin).</div></body></html>"
+
+    $MessageSubject = "$MainName. Понижение температуры. $DT"
+
+}
+
+if ($Tcur -ge $Tmax -or $Tcur -le $Tmin) {
 
     $MessageTo = "<email>"
 
     $MessageFrom = "WarningTemperature@$MainName"
 
     $MessageSMTPServer = "<smtp_server>"
-
-    $MessageSubject = "$MainName. Превышение температуры. $DT"
 
     Send-MailMessage -BodyAsHtml -Body $MessageBody -From $MessageFrom -To $MessageTo -SmtpServer $MessageSMTPServer -Subject $MessageSubject -Encoding Unicode
 
